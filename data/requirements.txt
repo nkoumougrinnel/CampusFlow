@@ -1,4 +1,0 @@
-psycopg2-binary==2.9.9
-pandas==2.2.2
-icalendar==5.0.12
-python-dotenv==1.0.1
