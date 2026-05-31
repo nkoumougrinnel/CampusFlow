@@ -6,6 +6,7 @@ Modèle de prédiction de congestion des salles du campus SUP'PTIC.
 
 - `congestion.ipynb` — notebook d'entraînement complet
 - `model.pkl` — modèle sérialisé (Random Forest + metadata)
+- `locust.py` — scénario de tests de charge Locust pour l'API CampusFlow
 
 ## Ce que le modèle prédit
 
@@ -58,6 +59,27 @@ label = loaded['label_reverse'][prediction]
 print(label)  # faible / moyen / eleve
 ```
 
+## Tests de charge (Locust)
+
+`locust.py` simule des utilisateurs qui sollicitent les endpoints de l'API :
+
+| Endpoint | Méthode | Poids | Description |
+|---|---|---|---|
+| `/locations` | GET | 3 | Liste des bâtiments |
+| `/flux/live` | GET | 3 | Flux en temps réel |
+| `/congestion` | GET | 2 | Congestion actuelle |
+| `/path?from=&to=` | GET | 1 | Itinéraire entre deux salles |
+| `/predict` | POST | 4 | Prédiction ML (endpoint prioritaire) |
+
+Lancer l'API puis, depuis `ml/` :
+
+```bash
+pip install locust
+locust -f locust.py --host=http://localhost:8000
+```
+
+Interface web : http://localhost:8089 — définir le nombre d'utilisateurs et le taux de montée en charge.
+
 ## Dépendances
 
 ```
@@ -67,4 +89,5 @@ numpy
 joblib
 matplotlib
 seaborn
+locust
 ```
