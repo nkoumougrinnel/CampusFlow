@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: campusflow
+      POSTGRES_PASSWORD: campusflow
+      POSTGRES_DB: campusflow
+    
+  redis:
+    image: redis:7
