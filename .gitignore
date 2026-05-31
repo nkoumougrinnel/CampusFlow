@@ -1,5 +1,92 @@
-# .gitignore
-.env
+# Python
 __pycache__/
-*.pyc
-data/processed/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.pyre/
+.mypy_cache/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+*.log
+*.pot
+*.mo
+.DS_Store
+
+# Virtual environment
+.venv/
+venv/
+
+# Distribution / packaging
+*.egg
+*.egg-info
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+typing_extensions/_t.py
+
+# Docker
+docker-compose.override.yml
+*.local
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Backup files
+*~
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Local settings
+*.sqlite3
+
+# Backend app files
+backend/__pycache__/
+backend/*.pyc
+backend/**/*.pyc
+backend/*.pyo
+backend/**/*.pyo
