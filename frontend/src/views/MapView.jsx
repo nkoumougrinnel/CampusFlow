@@ -1,15 +1,21 @@
+// src/views/MapView.jsx
+
 import CampusMap from '../components/CampusMap';
 import ItineraryPanel from '../components/ItineraryPanel';
 
 export default function MapView({ currentScreen, setCurrentScreen }) {
   return (
+    // Conteneur relatif qui occupe tout l'espace disponible (entre navbar et bottom bar)
     <div className="relative flex-1 overflow-hidden">
+      {/* Carte en fond, pleine hauteur */}
       <div className="absolute inset-0">
         <CampusMap currentScreen={currentScreen} />
       </div>
 
+      {/* ── Écran 1 : barre de recherche flottante ── */}
       {currentScreen === 1 && (
         <div className="absolute top-4 left-4 right-4 z-[400] flex gap-2 pointer-events-auto">
+          {/* Bouton Chercher */}
           <button
             onClick={() => setCurrentScreen(2)}
             className="flex-1 flex items-center gap-2 bg-white rounded-2xl shadow-md px-4 py-3 text-sm text-gray-500 hover:shadow-lg transition"
@@ -27,6 +33,7 @@ export default function MapView({ currentScreen, setCurrentScreen }) {
             </span>
           </button>
 
+          {/* Bouton Filtre */}
           <button className="bg-[#0088fe] text-white rounded-2xl shadow-md px-4 py-3 text-sm font-semibold hover:bg-blue-600 transition whitespace-nowrap flex items-center gap-1">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="6" x2="20" y2="6" />
@@ -38,10 +45,12 @@ export default function MapView({ currentScreen, setCurrentScreen }) {
         </div>
       )}
 
+      {/* ── Écrans 3 & 4 : panneau itinéraire ── */}
       {(currentScreen === 3 || currentScreen === 4) && (
         <ItineraryPanel />
       )}
 
+      {/* Titre et label "Vue interactive" sur écrans 1 & 2 */}
       {(currentScreen === 1 || currentScreen === 2) && (
         <div className="absolute top-20 left-0 right-0 text-center z-[300] pointer-events-none">
           <h2 className="text-lg font-bold text-gray-800 drop-shadow-sm">Carte du Campus</h2>
@@ -49,6 +58,7 @@ export default function MapView({ currentScreen, setCurrentScreen }) {
         </div>
       )}
 
+      {/* Flèche bas — navigation vers écran suivant */}
       <button
         onClick={() => setCurrentScreen((s) => Math.min(s + 1, 5))}
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[400] bg-white/90 rounded-full p-2 shadow-md hover:shadow-lg transition pointer-events-auto"

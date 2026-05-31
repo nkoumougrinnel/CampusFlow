@@ -1,3 +1,5 @@
+// src/views/BuildingList.jsx
+
 import RoomCard from '../components/RoomCard';
 
 const ROOMS = [
@@ -13,6 +15,7 @@ export default function BuildingList() {
     <div className="flex-1 overflow-y-auto bg-gray-100 px-4 py-5">
       <h2 className="text-xl font-bold text-gray-800 mb-4">Batiments disponibles</h2>
 
+      {/* Liste verticale de RoomCard */}
       <div className="flex flex-col gap-3">
         {ROOMS.map((room) => (
           <RoomCard
