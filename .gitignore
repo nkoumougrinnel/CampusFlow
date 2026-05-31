@@ -90,3 +90,8 @@ backend/*.pyc
 backend/**/*.pyc
 backend/*.pyo
 backend/**/*.pyo
+# .gitignore
+.env
+__pycache__/
+*.pyc
+data/processed/
