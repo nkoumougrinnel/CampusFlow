@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 
 # Charger les données des lieux depuis campus.json
-with open('campusflow_data/campus.json', 'r', encoding='utf-8') as f:
+with open('campus.json', 'r', encoding='utf-8') as f:
     locations_data = json.load(f)
 
 locations_df = pd.DataFrame(locations_data)
@@ -41,9 +41,9 @@ for week in range(num_weeks):
                 if nom_lieu == "Bibliothèque":
                     activite_prevue = 0
                     if 12 <= heure_du_jour < 14 or heure_du_jour >= 17:
-                        nombre_etudiants = int(np.random.uniform(0.20, 0.40) * capacite) # Peaks
+                        nombre_etudiants = int(np.random.uniform(0.25, 0.70) * capacite) # Peaks
                     else:
-                        nombre_etudiants = int(np.random.uniform(0.00, 0.20) * capacite)
+                        nombre_etudiants = int(np.random.uniform(0.00, 0.25) * capacite)
                 elif nom_lieu == "Amphi":
                     if jour_semaine in [0, 2, 4]: # Lundi, Mercredi, Vendredi
                         activite_prevue = 1
@@ -52,21 +52,36 @@ for week in range(num_weeks):
                         activite_prevue = 1
                 else:
                     # Activité par défaut pour les autres salles
-                    if np.random.rand() > 0.5: # 50% chance d'activité prévue
+                    if np.random.rand() > 0.75: # 75% chance d'activité prévue
                         activite_prevue = 1
 
-                # Ajustement nombre_etudiants selon activite_prevue
+                # Quand activite_prevue=1, rester dans la zone moyen-élevé
                 if activite_prevue == 1:
-                    nombre_etudiants = int(np.random.uniform(0.60, 0.95) * capacite)
-                elif activite_prevue == 0 and nom_lieu != "Bibliothèque": # Already handled for Biblio
-                    nombre_etudiants = int(np.random.uniform(0.00, 0.40) * capacite)
+                    nombre_etudiants = int(np.random.uniform(0.45, 0.80) * capacite)
 
-                # Réduction d'activité le Samedi
-                if jour_semaine == 5: # Samedi
-                    nombre_etudiants = int(nombre_etudiants * np.random.uniform(0.50, 0.80)) # 20-50% de réduction
+                # Quand pas d'activité prévue — majoritairement vide
+                elif activite_prevue == 0 and nom_lieu != "Bibliothèque":
+                    nombre_etudiants = int(np.random.uniform(0.00, 0.25) * capacite)  # était 0.00-0.55
 
+                # Quand activité prévue — rester sous 70%
+                if activite_prevue == 1:
+                    nombre_etudiants = int(np.random.uniform(0.35, 0.65) * capacite)  # était 0.45-0.80
+
+                # Amphi spécifiquement
+                if nom_lieu == "Amphi" and activite_prevue == 1:
+                    nombre_etudiants = int(np.random.uniform(0.30, 0.65) * capacite)
+
+                # Bibliothèque — réduire aussi les pics
+                if 12 <= heure_du_jour < 14 or heure_du_jour >= 17:
+                    nombre_etudiants = int(np.random.uniform(0.15, 0.55) * capacite)  # était 0.25-0.70
+                else:
+                    nombre_etudiants = int(np.random.uniform(0.00, 0.15) * capacite)  # était 0.00-0.25
+
+                # Réduction samedi plus agressive
+                if jour_semaine == 5:
+                    nombre_etudiants = int(nombre_etudiants * np.random.uniform(0.20, 0.50))  # était 0.50-0.80
                 # Ajouter du bruit aléatoire
-                nombre_etudiants = max(0, min(capacite, nombre_etudiants + np.random.randint(-5, 5)))
+                nombre_etudiants = max(0, min(capacite, nombre_etudiants + np.random.randint(-5, 2)))
 
                 # Calcul niveau_congestion
                 taux_occupation = nombre_etudiants / capacite
@@ -92,5 +107,5 @@ df = pd.DataFrame(data)
 # Assurer un minimum de 5000 lignes (le calcul actuel devrait en générer beaucoup plus)
 # 4 semaines * 6 jours/semaine * 15 heures/jour * 17 lieux = 6120 lignes
 
-df.to_csv('flux_historique.csv', index=False, encoding='utf-8')
-print("flux_historique.csv généré avec succès.")
+df.to_csv('flux historique.csv', index=False, encoding='utf-8')
+print("flux historique.csv généré avec succès.")

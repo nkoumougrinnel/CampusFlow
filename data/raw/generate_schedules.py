@@ -5,13 +5,13 @@ import json
 from datetime import datetime, timedelta
 
 # Charger les données des lieux depuis campus.json
-with open("campusflow_data/campus.json", "r", encoding="utf-8") as f:
+with open("campus.json", "r", encoding="utf-8") as f:
     locations_data = json.load(f)
 locations_df = pd.DataFrame(locations_data)
 
 # Charger les données de flux pour s'assurer d'une certaine cohérence
 try:
-    flux_df = pd.read_csv("campusflow_data/flux_historique.csv")
+    flux_df = pd.read_csv("flux historique.csv")
 except FileNotFoundError:
     print("flux_historique.csv non trouvé. Veuillez le générer d'abord.")
     exit()
@@ -29,7 +29,7 @@ active_flux["datetime"] = pd.to_datetime(active_flux["timestamp"])
 
 # Assurez-vous qu'il y a suffisamment de données actives pour générer des emplois du temps
 if active_flux.empty:
-    print("Aucune activité enregistrée dans flux_historique.csv. Impossible de générer des emplois du temps cohérents.")
+    print("Aucune activité enregistrée dans flux historique.csv. Impossible de générer des emplois du temps cohérents.")
     exit()
 
 for student_id in student_ids:

@@ -6,11 +6,11 @@ import random
 
 # Charger les données de flux pour obtenir une plage de temps cohérente
 try:
-    flux_df = pd.read_csv("campusflow_data/flux_historique.csv")
+    flux_df = pd.read_csv("flux historique.csv")
     start_date_flux = pd.to_datetime(flux_df["timestamp"]).min()
     end_date_flux = pd.to_datetime(flux_df["timestamp"]).max()
 except FileNotFoundError:
-    print("flux_historique.csv non trouvé. Veuillez le générer d'abord.")
+    print("flux historique.csv non trouvé. Veuillez le générer d'abord.")
     exit()
 
 # Phrases de feedback en français

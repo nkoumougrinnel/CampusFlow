@@ -13,7 +13,6 @@ Ce dossier contient l'architecture de données complète pour le projet CampusFl
 - `feedbacks.csv`: Dataset CSV de feedbacks étudiants fictifs.
 - `schema.sql`: Script SQL pour la création des tables PostgreSQL.
 - `load_data.py`: Script Python ETL pour charger les données CSV dans PostgreSQL.
-- `requirements.txt`: Liste des dépendances Python.
 - `README.md`: Ce document.
 
 ## 1. `campus.json`
@@ -45,9 +44,9 @@ Ce fichier JSON est la source de vérité pour tous les lieux du campus. Il cont
 ]
 ```
 
-## 2. `generate_flux.py` et `flux_historique.csv`
+## 2. `generate_flux.py` et `flux historique.csv`
 
-Ce script Python génère un fichier CSV (`flux_historique.csv`) simulant la présence étudiante sur le campus sur 4 semaines, du lundi au samedi, de 7h à 21h, avec une granularité horaire. Il respecte les règles de réalisme spécifiées dans le cahier des charges.
+Ce script Python génère un fichier CSV (`flux historique.csv`) simulant la présence étudiante sur le campus sur 4 semaines, du lundi au samedi, de 7h à 21h, avec une granularité horaire. Il respecte les règles de réalisme spécifiées dans le cahier des charges.
 
 **Colonnes de `flux_historique.csv` :**
 
@@ -69,7 +68,7 @@ python3.11 generate_flux.py
 
 ## 3. `generate_schedules.py` et `schedules.csv`
 
-Ce script génère un fichier CSV (`schedules.csv`) d'emplois du temps fictifs pour un ensemble d'étudiants. Les emplois du temps sont générés de manière cohérente avec les périodes d'activité identifiées dans `flux_historique.csv`.
+Ce script génère un fichier CSV (`schedules.csv`) d'emplois du temps fictifs pour un ensemble d'étudiants. Les emplois du temps sont générés de manière cohérente avec les périodes d'activité identifiées dans `flux historique.csv`.
 
 **Colonnes de `schedules.csv` :**
 

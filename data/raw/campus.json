@@ -5,15 +5,15 @@
         "latitude": 3.8450,
         "longitude": 11.5020,
         "capacite": 120,
-        "type": "Amphithéâtre"
+        "type": "Amphitheatre"
     },
     {
         "id": 2,
-        "nom": "Bibliothèque",
+        "nom": "Bibliotheque",
         "latitude": 3.8445,
         "longitude": 11.5015,
         "capacite": 20,
-        "type": "Bibliothèque"
+        "type": "Bibliotheque"
     },
     {
         "id": 3,
