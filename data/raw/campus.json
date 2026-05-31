@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "nom": "Amphi 600",
+    "latitude": 3.8795,
+    "longitude": 11.5172,
+    "capacite": 600,
+    "type": "amphi"
+  },
+  {
+    "id": 2,
+    "nom": "Amphi 200",
+    "latitude": 3.8788,
+    "longitude": 11.518,
+    "capacite": 200,
+    "type": "amphi"
+  },
+  {
+    "id": 3,
+    "nom": "Bloc Pédagogique A",
+    "latitude": 3.8783,
+    "longitude": 11.5168,
+    "capacite": 120,
+    "type": "salle"
+  },
+  {
+    "id": 4,
+    "nom": "Bloc Pédagogique B",
+    "latitude": 3.8779,
+    "longitude": 11.5175,
+    "capacite": 120,
+    "type": "salle"
+  },
+  {
+    "id": 5,
+    "nom": "Labo Réseaux & Télécoms",
+    "latitude": 3.88,
+    "longitude": 11.5162,
+    "capacite": 40,
+    "type": "labo"
+  },
+  {
+    "id": 6,
+    "nom": "Labo Radiocommunications",
+    "latitude": 3.8803,
+    "longitude": 11.517,
+    "capacite": 30,
+    "type": "labo"
+  },
+  {
+    "id": 7,
+    "nom": "Labo Sécurité des Systèmes",
+    "latitude": 3.8806,
+    "longitude": 11.5178,
+    "capacite": 30,
+    "type": "labo"
+  },
+  {
+    "id": 8,
+    "nom": "Labo Informatique & Télématique",
+    "latitude": 3.8797,
+    "longitude": 11.5185,
+    "capacite": 50,
+    "type": "labo"
+  },
+  {
+    "id": 9,
+    "nom": "Bibliothèque Centrale",
+    "latitude": 3.8775,
+    "longitude": 11.5182,
+    "capacite": 100,
+    "type": "salle"
+  },
+  {
+    "id": 10,
+    "nom": "Incubateur SUP'PTIC",
+    "latitude": 3.8809,
+    "longitude": 11.5155,
+    "capacite": 60,
+    "type": "labo"
+  },
+  {
+    "id": 11,
+    "nom": "Restaurant Universitaire",
+    "latitude": 3.877,
+    "longitude": 11.516,
+    "capacite": 300,
+    "type": "salle"
+  },
+  {
+    "id": 12,
+    "nom": "Direction Générale",
+    "latitude": 3.8792,
+    "longitude": 11.519,
+    "capacite": 25,
+    "type": "salle"
+  }
+]
