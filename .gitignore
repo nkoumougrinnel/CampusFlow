@@ -91,7 +91,9 @@ backend/**/*.pyc
 backend/*.pyo
 backend/**/*.pyo
 # .gitignore
-.env
+
 __pycache__/
 *.pyc
-data/processed/
+
+#mon dataset local que je ne veux pas vous donner
+flux_deepseek.csv
