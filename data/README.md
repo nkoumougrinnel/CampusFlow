@@ -1,251 +1,212 @@
-# Architecture de Données CampusFlow Lite
+# Architecture de données — CampusFlow Lite
 
-Ce dossier contient l'architecture de données complète pour le projet CampusFlow Lite, visant à simuler et optimiser les flux étudiants sur un campus fictif basé à Yaoundé.
+Ce dossier contient la génération, la documentation et le chargement des données simulées pour CampusFlow Lite (campus fictif à Yaoundé).
 
-## Contenu du Dossier
+## Arborescence
 
-- `campus.json`: Fichier source de vérité décrivant les lieux du campus.
-- `generate_flux.py`: Script Python pour générer le dataset `flux_historique.csv`.
-- `flux_historique.csv`: Dataset CSV de la fréquentation étudiante réelle vs prévue.
-- `generate_schedules.py`: Script Python pour générer le dataset `schedules.csv`.
-- `schedules.csv`: Dataset CSV d'emplois du temps fictifs.
-- `generate_feedbacks.py`: Script Python pour générer le dataset `feedbacks.csv`.
-- `feedbacks.csv`: Dataset CSV de feedbacks étudiants fictifs.
-- `schema.sql`: Script SQL pour la création des tables PostgreSQL.
-- `load_data.py`: Script Python ETL pour charger les données CSV dans PostgreSQL.
-- `README.md`: Ce document.
-
-## 1. `campus.json`
-
-Ce fichier JSON est la source de vérité pour tous les lieux du campus. Il contient les informations suivantes pour chaque bâtiment :
-
-| Champ       | Type      | Description                                          |
-| :---------- | :-------- | :--------------------------------------------------- |
-| `id`        | `int`     | Identifiant unique du lieu                           |
-| `nom`       | `string`  | Nom du lieu (ex: "Amphi", "Bibliothèque")          |
-| `latitude`  | `numeric` | Latitude du lieu (basée sur Yaoundé)                 |
-| `longitude` | `numeric` | Longitude du lieu (basée sur Yaoundé)                |
-| `capacite`  | `int`     | Capacité maximale du lieu en nombre d'étudiants      |
-| `type`      | `string`  | Type de lieu (ex: "Amphithéâtre", "Salle de cours") |
-
-**Exemple :**
-
-```json
-[
-    {
-        "id": 1,
-        "nom": "Amphi",
-        "latitude": 3.8450,
-        "longitude": 11.5020,
-        "capacite": 120,
-        "type": "Amphithéâtre"
-    },
-    ...
-]
+```
+data/
+├── README.md                 # Ce document
+├── load_postgres.py          # ETL : CSV/JSON → PostgreSQL
+├── io_utils.py               # Lecture CSV multi-encodage
+├── .env.example              # Variables PGHOST, PGDATABASE, etc.
+├── db/
+│   └── schema.sql            # Schéma PostgreSQL (+ PostGIS)
+└── raw/
+    ├── campus.json           # Lieux du campus (source de vérité)
+    ├── generate_flux.py      # Génère flux historique.csv
+    ├── generate_schedules.py # Génère schedules.csv
+    ├── generate_feedback.py  # Génère feedbacks.csv
+    ├── flux historique.csv   # (généré) fréquentation horaire
+    ├── schedules.csv         # (généré) emplois du temps par groupe
+    └── feedbacks.csv         # (généré) avis étudiants
 ```
 
-## 2. `generate_flux.py` et `flux historique.csv`
+Les dépendances Python du projet sont dans `requirements.txt` à la racine du dépôt.
 
-Ce script Python génère un fichier CSV (`flux historique.csv`) simulant la présence étudiante sur le campus sur 4 semaines, du lundi au samedi, de 7h à 21h, avec une granularité horaire. Il respecte les règles de réalisme spécifiées dans le cahier des charges.
+---
 
-**Colonnes de `flux_historique.csv` :**
+## 1. `raw/campus.json`
 
-| Colonne             | Type      | Description                                                                 |
-| :------------------ | :-------- | :-------------------------------------------------------------------------- |
-| `location_id`       | `int`     | Identifiant du lieu                                                         |
-| `timestamp`         | `datetime`| Date et heure de l'observation (YYYY-MM-DD HH:MM:SS)                        |
-| `heure_du_jour`     | `int`     | Heure de l'observation (0-23)                                               |
-| `jour_semaine`      | `int`     | Jour de la semaine (0=Lundi à 5=Samedi)                                     |
-| `activite_prevue`   | `int`     | Indique si une activité est prévue (1) ou non (0)                           |
-| `nombre_etudiants`  | `int`     | Nombre d'étudiants présents                                                 |
-| `niveau_congestion` | `string`  | Niveau de congestion ("faible" < 30%, "moyen" 30-70%, "eleve" > 70%) |
+Source de vérité pour tous les lieux du campus.
 
-**Exécution :**
+| Champ       | Type     | Description                                      |
+| :---------- | :------- | :----------------------------------------------- |
+| `id`        | `int`    | Identifiant unique du lieu                       |
+| `nom`       | `string` | Nom du lieu (ex. « Amphi », « Bibliothèque »)  |
+| `latitude`  | `float`  | Latitude (Yaoundé)                               |
+| `longitude` | `float`  | Longitude (Yaoundé)                              |
+| `capacite`  | `int`    | Capacité maximale en nombre de places            |
+| `type`      | `string` | Type de lieu (amphithéâtre, salle, labo, etc.)   |
+
+---
+
+## 2. `generate_flux.py` → `flux historique.csv`
+
+Simule la présence étudiante sur **4 semaines** à partir du **1ᵉʳ mai 2026**, du **lundi au samedi**, de **7h à 21h** (pas horaire), pour chaque lieu de `campus.json`. Les dimanches sont ignorés.
+
+### Règles de réalisme
+
+| Lieu / cas | Comportement |
+| :--------- | :------------- |
+| **Bibliothèque** | `activite_prevue = 0` ; pics 12h–14h et ≥ 17h (15–55 % capacité), sinon faible affluence (0–15 %) |
+| **Amphi** | Activité prévue lun / mer / ven ; occupation 30–65 % de la capacité |
+| **Petites salles TP** (`capacite == 15`) | Activité prévue mar / jeu |
+| **Autres salles** | ~25 % de chance d’activité prévue par créneau |
+| **Activité prévue** | Occupation cible 35–65 % (sous 70 % pour limiter le « eleve ») |
+| **Sans activité** (hors biblio.) | 0–25 % de la capacité |
+| **Samedi** | Affluence réduite (× 0,20–0,50) |
+| **Bruit** | ± quelques étudiants, plafonné à `capacite` |
+
+### Colonnes de `flux historique.csv`
+
+| Colonne             | Type     | Description |
+| :------------------ | :------- | :---------- |
+| `location_id`       | `int`    | ID du lieu (`campus.json`) |
+| `timestamp`         | `string` | `YYYY-MM-DD HH:MM:SS` |
+| `heure_du_jour`     | `int`    | Heure (7–21) |
+| `jour_semaine`      | `int`    | 0 = lundi … 5 = samedi |
+| `activite_prevue`   | `int`    | `1` si cours/activité prévue, sinon `0` |
+| `nombre_etudiants`  | `int`    | Effectif simulé |
+| `niveau_congestion` | `string` | `faible` (&lt; 30 %), `moyen` (30–70 %), `eleve` (&gt; 70 %) |
+
+Volume attendu : **~6 000 lignes** (4 semaines × 6 jours × 15 h × nombre de lieux).
+
+### Exécution
 
 ```bash
-python3.11 generate_flux.py
+cd data/raw
+python generate_flux.py
 ```
 
-## 3. `generate_schedules.py` et `schedules.csv`
+---
 
-Ce script génère un fichier CSV (`schedules.csv`) d'emplois du temps fictifs pour un ensemble d'étudiants. Les emplois du temps sont générés de manière cohérente avec les périodes d'activité identifiées dans `flux historique.csv`.
+## 3. `generate_schedules.py` → `schedules.csv`
 
-**Colonnes de `schedules.csv` :**
+Génère des emplois du temps **par groupe pédagogique** (et non plus par `etudiant_id` individuel), sur la même période que les flux (4 semaines depuis le 1ᵉʳ mai 2026).
 
-| Colonne       | Type      | Description                                     |
-| :------------ | :-------- | :---------------------------------------------- |
-| `id`          | `int`     | Identifiant unique de l'emploi du temps         |
-| `etudiant_id` | `int`     | Identifiant de l'étudiant                       |
-| `salle_id`    | `int`     | Identifiant du lieu (salle)                     |
-| `heure_debut` | `datetime`| Heure de début de l'activité (YYYY-MM-DD HH:MM:SS) |
-| `heure_fin`   | `datetime`| Heure de fin de l'activité (YYYY-MM-DD HH:MM:SS)   |
+### Groupes
 
-**Exécution :**
+- **Cours magistraux** : `ITT1A`, `ITT1B`, `ITT2A`, `ITT2B`, `ITT3RC`, `ITT3IR`, `IPT1`, `IPT2`
+- **Travaux pratiques** (niveaux 1–2 ITT uniquement) : sous-groupes `ITT1A-G1` … `ITT2B-G4` (16 groupes TP, 4 par filière L1/L2)
+
+### Créneaux et salles
+
+- Créneaux : `(7–9)`, `(9–11)`, `(11–13)`, `(13–15)`, `(15–17)`, `(17–19)`
+- **Cours** : 1 à 3 créneaux/jour/groupe ; salle = amphi (60 %) ou grande salle de cours (40 %)
+- **TP** : 0 à 2 créneaux/jour/groupe TP ; salle = salle TP (80 %) ou salle de cours (20 %)
+
+Répartition des salles selon la capacité et le nom dans `campus.json` (amphi ≥ 100, cours 30–99, TP ≤ 60, hors bibliothèque).
+
+### Colonnes de `schedules.csv`
+
+| Colonne         | Type     | Description |
+| :-------------- | :------- | :---------- |
+| `id`            | `int`    | Identifiant unique du créneau |
+| `groupe`        | `string` | Code groupe (ex. `ITT1A`, `ITT1A-G2`) |
+| `type_activite` | `string` | `cours` ou `tp` |
+| `salle_id`      | `int`    | ID du lieu |
+| `heure_debut`   | `string` | Début `YYYY-MM-DD HH:MM:SS` |
+| `heure_fin`     | `string` | Fin `YYYY-MM-DD HH:MM:SS` |
+| `jour_semaine`  | `int`    | 0 = lundi … 5 = samedi |
+
+### Exécution
 
 ```bash
-python3.11 generate_schedules.py
+cd data/raw
+python generate_schedules.py
 ```
 
-## 4. `generate_feedbacks.py` et `feedbacks.csv`
+> **Note chargement PostgreSQL** : le schéma `db/schema.sql` et `load_postgres.py` utilisent encore la colonne `etudiant_id` pour la table `schedules`. Après régénération du CSV, adapter le schéma et le loader pour mapper `groupe` / `type_activite` si besoin.
 
-Ce script génère un fichier CSV (`feedbacks.csv`) contenant des feedbacks étudiants fictifs en français, avec un sentiment associé (positif, négatif, neutre). Les timestamps des feedbacks sont cohérents avec la période couverte par `flux_historique.csv`.
+---
 
-**Colonnes de `feedbacks.csv` :**
+## 4. `generate_feedback.py` → `feedbacks.csv`
 
-| Colonne       | Type      | Description                                     |
-| :------------ | :-------- | :---------------------------------------------- |
-| `id`          | `int`     | Identifiant unique du feedback                  |
-| `etudiant_id` | `int`     | Identifiant de l'étudiant                       |
-| `texte`       | `string`  | Contenu du feedback en français                 |
-| `sentiment`   | `string`  | Sentiment associé au feedback ("positif", "negatif", "neutre") |
-| `timestamp`   | `datetime`| Date et heure du feedback (YYYY-MM-DD HH:MM:SS) |
+Génère **1 000** feedbacks en français, avec sentiment `positif` (60 %), `negatif` (20 %), `neutre` (20 %). Les horodatages sont tirés aléatoirement dans la plage couverte par `flux historique.csv` (à générer avant).
 
-**Exécution :**
+### Colonnes de `feedbacks.csv`
+
+| Colonne       | Type     | Description |
+| :------------ | :------- | :---------- |
+| `id`          | `int`    | Identifiant du feedback |
+| `etudiant_id` | `int`    | ID étudiant fictif (1–200) |
+| `texte`       | `string` | Message en français |
+| `sentiment`   | `string` | `positif`, `negatif`, `neutre` |
+| `timestamp`   | `string` | `YYYY-MM-DD HH:MM:SS` |
+
+### Exécution
 
 ```bash
-python3.11 generate_feedbacks.py
+cd data/raw
+python generate_feedback.py
 ```
 
-## 5. `schema.sql`
+---
 
-Ce fichier contient les définitions SQL pour créer les quatre tables PostgreSQL (`locations`, `schedules`, `flux`, `feedbacks`) avec les contraintes appropriées (clés primaires, clés étrangères, NOT NULL, index, et support PostGIS pour la table `locations`).
+## 5. `db/schema.sql`
 
-**Schéma des tables :**
-
-### `locations`
-
-```sql
-CREATE TABLE IF NOT EXISTS locations (
-    id SERIAL PRIMARY KEY,
-    nom VARCHAR(255) NOT NULL,
-    latitude NUMERIC(9, 6) NOT NULL,
-    longitude NUMERIC(9, 6) NOT NULL,
-    capacite INTEGER NOT NULL,
-    type VARCHAR(100) NOT NULL,
-    geom GEOMETRY(Point, 4326) -- Colonne PostGIS pour les coordonnées géographiques (SRID 4326 pour WGS84)
-);
-CREATE INDEX IF NOT EXISTS locations_geom_idx ON locations USING GIST (geom);
-```
-
-### `schedules`
-
-```sql
-CREATE TABLE IF NOT EXISTS schedules (
-    id SERIAL PRIMARY KEY,
-    etudiant_id INTEGER NOT NULL,
-    salle_id INTEGER NOT NULL,
-    heure_debut TIMESTAMP WITH TIME ZONE NOT NULL,
-    heure_fin TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT fk_salle
-        FOREIGN KEY(salle_id)
-        REFERENCES locations(id)
-);
-CREATE INDEX IF NOT EXISTS schedules_etudiant_id_idx ON schedules (etudiant_id);
-CREATE INDEX IF NOT EXISTS schedules_salle_id_idx ON schedules (salle_id);
-```
-
-### `flux`
-
-```sql
-CREATE TABLE IF NOT EXISTS flux (
-    id SERIAL PRIMARY KEY,
-    location_id INTEGER NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-    nombre_etudiants INTEGER NOT NULL,
-    activite_prevue INTEGER NOT NULL,
-    heure_du_jour INTEGER NOT NULL,
-    jour_semaine INTEGER NOT NULL,
-    niveau_congestion VARCHAR(50) NOT NULL,
-    CONSTRAINT fk_location
-        FOREIGN KEY(location_id)
-        REFERENCES locations(id)
-);
-CREATE INDEX IF NOT EXISTS flux_location_id_idx ON flux (location_id);
-CREATE INDEX IF NOT EXISTS flux_timestamp_idx ON flux (timestamp);
-```
-
-### `feedbacks`
-
-```sql
-CREATE TABLE IF NOT EXISTS feedbacks (
-    id SERIAL PRIMARY KEY,
-    etudiant_id INTEGER NOT NULL,
-    texte TEXT NOT NULL,
-    sentiment VARCHAR(50) NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE NOT NULL
-);
-CREATE INDEX IF NOT EXISTS feedbacks_etudiant_id_idx ON feedbacks (etudiant_id);
-CREATE INDEX IF NOT EXISTS feedbacks_timestamp_idx ON feedbacks (timestamp);
-```
-
-**Exécution :**
-
-Pour exécuter ce script, vous devez avoir une base de données PostgreSQL avec l'extension PostGIS activée. Connectez-vous à votre base de données et exécutez le fichier :
+Définit les tables PostgreSQL `locations`, `schedules`, `flux`, `feedbacks` (clés, index, PostGIS sur `locations.geom`).
 
 ```bash
-psql -U your_user -d your_database -f schema.sql
+psql -U campusflow -d campusflow -f data/db/schema.sql
 ```
 
-## 6. `load_data.py`
+PostGIS doit être disponible sur la base (`CREATE EXTENSION postgis`).
 
-Ce script Python ETL (Extract, Transform, Load) est responsable du chargement des données générées (`campus.json`, `flux_historique.csv`, `schedules.csv`, `feedbacks.csv`) dans les tables PostgreSQL correspondantes. Il utilise la bibliothèque `psycopg2` pour interagir avec la base de données.
+---
 
-**Configuration :**
+## 6. `load_postgres.py`
 
-Avant l'exécution, assurez-vous de configurer les paramètres de connexion à votre base de données PostgreSQL dans la variable `DB_CONFIG` au début du script `load_data.py`.
+Charge `raw/campus.json`, `raw/flux historique.csv`, `raw/schedules.csv` et `raw/feedbacks.csv` vers PostgreSQL.
 
-```python
-DB_CONFIG = {
-    "host": "localhost",
-    "database": "campusflow_db",
-    "user": "campusflow_user",
-    "password": "campusflow_password"
-}
-```
+### Configuration
 
-**Exécution :**
+Copier `data/.env.example` vers `data/.env` ou exporter les variables :
+
+| Variable      | Défaut        |
+| :------------ | :------------ |
+| `PGHOST`      | `localhost`   |
+| `PGPORT`      | `5432`        |
+| `PGDATABASE`  | `campusflow`  |
+| `PGUSER`      | `campusflow`  |
+| `PGPASSWORD`  | `campusflow`  |
+
+### Exécution
+
+Depuis la racine du dépôt (avec le venv activé) :
 
 ```bash
-python3.11 load_data.py
+python data/load_postgres.py
 ```
 
-## 7. `requirements.txt`
+---
 
-Ce fichier liste toutes les dépendances Python nécessaires pour exécuter les scripts de génération et de chargement des données.
+## Ordre d’exécution recommandé
 
-**Installation des dépendances :**
-
-```bash
-pip3 install -r requirements.txt
-```
-
-## Ordre d'exécution recommandé
-
-1. **Installer les dépendances Python :**
+1. **Environnement** (à la racine du projet) :
    ```bash
-   pip3 install -r requirements.txt
-   ```
-2. **Générer les datasets CSV :**
-   ```bash
-   python3.11 generate_flux.py
-   python3.11 generate_schedules.py
-   python3.11 generate_feedbacks.py
-   ```
-3. **Créer la base de données PostgreSQL et les tables :**
-   - Assurez-vous que PostgreSQL et PostGIS sont installés et configurés.
-   - Créez une base de données et un utilisateur si nécessaire.
-   - Exécutez le script `schema.sql`.
-   ```bash
-   # Exemple de création de DB et utilisateur (à adapter)
-   # sudo -u postgres createuser campusflow_user
-   # sudo -u postgres createdb campusflow_db -O campusflow_user
-   # sudo -u postgres psql -d campusflow_db -c "CREATE EXTENSION postgis;"
-   psql -U campusflow_user -d campusflow_db -f schema.sql
-   ```
-4. **Charger les données dans PostgreSQL :**
-   - Mettez à jour `DB_CONFIG` dans `load_data.py` si nécessaire.
-   ```bash
-   python3.11 load_data.py
+   python -m venv .venv
+   .venv\Scripts\activate          # Windows
+   pip install -r requirements.txt
    ```
 
-Ce processus garantit que toutes les données sont générées, structurées et prêtes à être utilisées par les équipes ML, Backend et Frontend du projet CampusFlow Lite.
+2. **Générer les CSV** (dans `data/raw`) :
+   ```bash
+   cd data/raw
+   python generate_flux.py
+   python generate_schedules.py
+   python generate_feedback.py
+   ```
+
+3. **Créer le schéma PostgreSQL** :
+   ```bash
+   psql -U campusflow -d campusflow -f data/db/schema.sql
+   ```
+
+4. **Charger les données** :
+   ```bash
+   python data/load_postgres.py
+   ```
+
+Cette chaîne alimente les pipelines ML (`ml/`), le backend FastAPI et le frontend du projet.

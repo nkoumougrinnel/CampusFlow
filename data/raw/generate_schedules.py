@@ -1,64 +1,117 @@
-
 import pandas as pd
 import numpy as np
 import json
 from datetime import datetime, timedelta
 
-# Charger les données des lieux depuis campus.json
 with open("campus.json", "r", encoding="utf-8") as f:
     locations_data = json.load(f)
 locations_df = pd.DataFrame(locations_data)
 
-# Charger les données de flux pour s'assurer d'une certaine cohérence
-try:
-    flux_df = pd.read_csv("flux historique.csv")
-except FileNotFoundError:
-    print("flux_historique.csv non trouvé. Veuillez le générer d'abord.")
-    exit()
+# ── Groupes ──────────────────────────────────────────────────
+GROUPES_COURS = [
+    "ITT1A", "ITT1B", "ITT2A", "ITT2B",
+    "ITT3RC", "ITT3IR", "IPT1", "IPT2"
+]
 
-# Paramètres de génération
-num_students = 200 # Nombre d'étudiants fictifs
-num_schedules_per_student = 5 # Nombre moyen d'activités par étudiant sur la période
+# TP uniquement pour les niveaux 1 et 2 ITT
+GROUPES_AVEC_TP = ["ITT1A", "ITT1B", "ITT2A", "ITT2B"]
+GROUPES_TP = [
+    f"{gc}-G{g}" for gc in GROUPES_AVEC_TP for g in range(1, 5)
+]
+# ITT1A-G1, ITT1A-G2, ITT1A-G3, ITT1A-G4
+# ITT2A-G1, ITT2A-G2, ITT2A-G3, ITT2A-G4
+# soit 16 groupes de TP au total
 
+# ── Créneaux horaires ────────────────────────────────────────
+creneaux = [
+    (7, 9), (9, 11), (11, 13),
+    (13, 15), (15, 17), (17, 19)
+]
+
+# ── Salles par type ──────────────────────────────────────────
+salles_amphi   = locations_df[locations_df['capacite'] >= 100]
+salles_cours   = locations_df[
+    (locations_df['capacite'] >= 30) &
+    (locations_df['capacite'] < 100) &
+    (locations_df['nom'] != 'Bibliothèque')
+]
+salles_tp      = locations_df[
+    (locations_df['capacite'] <= 60) &
+    (locations_df['nom'] != 'Bibliothèque')
+]
+
+# ── Génération ───────────────────────────────────────────────
+start_date = datetime(2026, 5, 1)
+num_weeks = 4
 all_schedules = []
-student_ids = np.arange(1, num_students + 1)
+schedule_id = 1
 
-# Filtrer les flux pour les périodes avec activité
-active_flux = flux_df[flux_df["nombre_etudiants"] > 0].copy()
-active_flux["datetime"] = pd.to_datetime(active_flux["timestamp"])
+for week in range(num_weeks):
+    for day_offset in range(6):  # Lundi à Samedi
+        current_date = start_date + timedelta(weeks=week, days=day_offset)
+        jour_semaine = current_date.weekday()
 
-# Assurez-vous qu'il y a suffisamment de données actives pour générer des emplois du temps
-if active_flux.empty:
-    print("Aucune activité enregistrée dans flux historique.csv. Impossible de générer des emplois du temps cohérents.")
-    exit()
+        # ── Cours magistraux (groupes de cours) ──
+        for groupe in GROUPES_COURS:
+            # 1 à 3 créneaux par jour par groupe
+            num_activites = np.random.randint(1, 4)
+            creneaux_choisis = np.random.choice(
+                len(creneaux), size=num_activites, replace=False
+            )
 
-for student_id in student_ids:
-    for _ in range(np.random.randint(3, num_schedules_per_student + 3)): # Variation du nombre d'activités
-        # Choisir une activité existante aléatoirement pour la cohérence
-        random_activity = active_flux.sample(1).iloc[0]
+            for idx in creneaux_choisis:
+                debut_h, fin_h = creneaux[idx]
 
-        salle_id = random_activity["location_id"]
-        heure_debut = random_activity["datetime"]
+                # Cours magistral → amphi ou grande salle de cours
+                # 60% amphi, 40% salle de cours
+                if np.random.rand() < 0.60 and len(salles_amphi) > 0:
+                    salle = salles_amphi.sample(1).iloc[0]
+                else:
+                    salle = salles_cours.sample(1).iloc[0]
 
-        # Durée aléatoire de l'activité (1 à 3 heures)
-        duration_hours = np.random.choice([1, 2, 3])
-        heure_fin = heure_debut + timedelta(hours=int(duration_hours))
+                all_schedules.append({
+                    "id": schedule_id,
+                    "groupe": groupe,
+                    "type_activite": "cours",
+                    "salle_id": int(salle["id"]),
+                    "heure_debut": current_date.replace(hour=debut_h, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    "heure_fin": current_date.replace(hour=fin_h, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    "jour_semaine": jour_semaine
+                })
+                schedule_id += 1
 
-        # S'assurer que l'heure de fin ne dépasse pas 21h (fin de journée)
-        if heure_fin.hour >= 22:
-            heure_fin = heure_debut.replace(hour=21, minute=0, second=0)
+        # ── Travaux pratiques (groupes TP) ──
+        for groupe_tp in GROUPES_TP:
+            # Les TP ont lieu 1 à 2 fois par jour max
+            num_activites = np.random.randint(0, 3)
+            if num_activites == 0:
+                continue
 
-        all_schedules.append({
-            "etudiant_id": student_id,
-            "salle_id": salle_id,
-            "heure_debut": heure_debut.strftime("%Y-%m-%d %H:%M:%S"),
-            "heure_fin": heure_fin.strftime("%Y-%m-%d %H:%M:%S")
-        })
+            creneaux_choisis = np.random.choice(
+                len(creneaux), size=num_activites, replace=False
+            )
+
+            for idx in creneaux_choisis:
+                debut_h, fin_h = creneaux[idx]
+
+                # TP → majoritairement salles TP (80%), parfois salle de cours (20%)
+                if np.random.rand() < 0.80:
+                    salle = salles_tp.sample(1).iloc[0]
+                else:
+                    salle = salles_cours.sample(1).iloc[0]
+
+                all_schedules.append({
+                    "id": schedule_id,
+                    "groupe": groupe_tp,
+                    "type_activite": "tp",
+                    "salle_id": int(salle["id"]),
+                    "heure_debut": current_date.replace(hour=debut_h, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    "heure_fin": current_date.replace(hour=fin_h, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    "jour_semaine": jour_semaine
+                })
+                schedule_id += 1
 
 schedules_df = pd.DataFrame(all_schedules)
-schedules_df.index.name = "id"
-schedules_df.reset_index(inplace=True)
-schedules_df["id"] = schedules_df.index + 1 # Ajouter un ID auto-incrémenté
-
 schedules_df.to_csv("schedules.csv", index=False, encoding="utf-8")
-print("schedules.csv généré avec succès.")
+print(f"schedules.csv généré — {len(schedules_df)} lignes")
+print(schedules_df.head(15))
