@@ -90,6 +90,7 @@ backend/*.pyc
 backend/**/*.pyc
 backend/*.pyo
 backend/**/*.pyo
+
 # .gitignore
 
 __pycache__/
