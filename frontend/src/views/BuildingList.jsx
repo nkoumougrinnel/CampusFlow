@@ -3,11 +3,11 @@
 import RoomCard from '../components/RoomCard';
 
 const ROOMS = [
-  { id: 1, name: 'Salle C17', status: 'occupied', time: 'occupée dans 1h' },
-  { id: 2, name: 'Salle C16', status: 'available', time: 'libre maintenant' },
-  { id: 3, name: 'Amphi A', status: 'occupied', time: 'occupée dans 1h' },
-  { id: 4, name: 'Salle B04', status: 'available', time: "libre jusqu'à 15h" },
-  { id: 5, name: 'Salle B12', status: 'occupied', time: 'occupée dans 30 min' },
+  { id: 1, name: 'Salle C17',  status: 'occupied', time: 'occupée dans 1h' },
+  { id: 2, name: 'Salle C16',  status: 'available', time: 'libre maintenant' },
+  { id: 3, name: 'Amphi A',    status: 'occupied', time: 'occupée dans 1h' },
+  { id: 4, name: 'Salle B04',  status: 'waiting',  time: 'étudiants en attente' },
+  { id: 5, name: 'Salle B12',  status: 'waiting',  time: 'en attente depuis 10 min' },
 ];
 
 export default function BuildingList() {
