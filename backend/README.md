@@ -1,128 +1,214 @@
-# CampusFlow Lite — Backend API
+# CampusFlow Lite — Backend
 
-**CampusFlow Lite** est le cœur opérationnel d'une plateforme de gestion des flux et de la congestion sur un campus universitaire. Développé dans le cadre du **Hackathon 2025**, ce backend expose une API REST performante pour centraliser la logique métier, le routage optimal, et les prédictions par Machine Learning.
-
----
-
-## 🚀 Stack Technique
-
-Le projet repose sur une stack moderne et robuste, choisie pour sa rapidité de développement et ses performances :
-
-| Composant | Technologie | Usage |
-| :--- | :--- | :--- |
-| **Framework** | **FastAPI** | Création de l'API REST haute performance. |
-| **Base de données** | **PostgreSQL** | Stockage persistant des données (locations, flux, feedbacks). |
-| **Cache / Temps réel** | **Redis** | Mise en cache de la congestion avec TTL (60s). |
-| **Algorithmique** | **NetworkX** | Calcul d'itinéraires optimaux (Dijkstra). |
-| **Machine Learning** | **Scikit-learn** | Prédiction de l'affluence via Random Forest. |
-| **ORM** | **SQLAlchemy** | Abstraction et gestion de la base de données. |
-| **Validation** | **Pydantic v2** | Garantie de l'intégrité des données d'entrée/sortie. |
+> API REST FastAPI pour la visualisation de congestion du campus, le calcul d'itinéraires, la prédiction ML et la gestion des feedbacks étudiants.
 
 ---
 
-## 🏗️ Architecture du Projet
+## Table des matières
 
-Le projet suit une structure modulaire et scalable, séparant clairement les responsabilités :
+- [Stack technique](#stack-technique)
+- [Structure du projet](#structure-du-projet)
+- [Endpoints API](#endpoints-api)
+- [Lancement](#lancement)
+- [Tests](#tests)
+- [Bonnes pratiques](#bonnes-pratiques)
+- [Évolutions possibles](#évolutions-possibles)
+- [Dépannage](#dépannage)
 
-```text
-app/
-├── main.py             # Point d'entrée FastAPI
-├── database/           # Configuration SQLAlchemy & sessions
-├── models/             # Modèles ORM (PostgreSQL)
-├── schemas/            # Schémas de validation Pydantic
-├── routers/            # Définition des endpoints API
-├── services/           # Logique métier (congestion, pathfinding, ML)
-├── utils/              # Helpers (Redis, erreurs, réponses)
-└── ml/                 # Inférence Machine Learning (Random Forest)
+---
+
+## Stack technique
+
+| Outil | Rôle |
+|---|---|
+| **FastAPI** | Framework web, validation Pydantic, Swagger auto-généré |
+| **PostgreSQL** | Base de données relationnelle persistante |
+| **Redis** | Cache distribué pour la congestion temps réel (TTL 60s) |
+| **SQLAlchemy** | ORM pour l'abstraction de la base de données |
+| **NetworkX** | Calcul du plus court chemin (Dijkstra) |
+| **Scikit-learn** | Modèle Random Forest pour la prédiction de congestion |
+| **Docker Compose** | Orchestration des services (backend, PostgreSQL, Redis) |
+
+---
+
+## Structure du projet
+
+```
+campusflow-backend/
+├── app/
+│   ├── main.py                   # Point d'entrée FastAPI (CORS, routes, erreurs)
+│   ├── database/
+│   │   ├── session.py            # Configuration SQLAlchemy
+│   │   └── models.py             # Tables ORM : Location, Flux, Schedule, Feedback
+│   ├── schemas/                  # Modèles Pydantic (validation & sérialisation)
+│   ├── routers/                  # Endpoints API (locations, congestion, flux, path…)
+│   ├── services/                 # Logique métier (algorithmes, calculs, accès DB)
+│   ├── ml/
+│   │   └── model.py              # Chargement et inférence du modèle Random Forest
+│   └── utils/
+│       ├── redis_client.py       # Client Redis
+│       ├── errors.py             # Handler global d'erreurs HTTP
+│       └── seed.py               # Peuplement initial de la base
+├── tests/                        # Tests unitaires et d'intégration (pytest)
+├── models/                       # Modèle ML entraîné : congestion_rf.pkl
+├── migrations/                   # Scripts Alembic
+├── requirements.txt
+├── requirements-dev.txt          # pytest, httpx, fakeredis
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
 
-### Responsabilités des Couches
-*   **Models** : Définition des entités SQL sans logique métier.
-*   **Routers** : Gestion des routes HTTP et injection de dépendances.
-*   **Services** : Cœur de la logique métier (calculs NetworkX, agrégations).
-*   **ML Layer** : Module d'inférence isolé chargeant le modèle au démarrage.
+---
+
+## Endpoints API
+
+**Base URL :** `http://localhost:8000` — Documentation interactive : [`/docs`](http://localhost:8000/docs)
+
+### `GET /locations`
+Liste des bâtiments actifs.  
+Paramètres : `?type=amphi` · `?active=false`  
+Réponse : `[{id, name, latitude, longitude, type, capacity, is_active, …}]`
+
+### `GET /congestion`
+Niveau de congestion actuel (Redis ou PostgreSQL).  
+Paramètre : `?location_id=5`  
+Réponse : `[{location_id, level, occupancy_rate, current_count, updated_at}]`
+
+### `GET /flux/live`
+Flux entrants/sortants sur les dernières minutes.  
+Paramètre : `?window=5`  
+Réponse : `[{location_id, entries, exits, net_flow, timestamp}]`
+
+### `GET /flux/history/{location_id}`
+Historique d'un bâtiment sur une plage de dates.  
+Paramètres : `?from=ISO8601&to=ISO8601&granularity=hour`  
+Réponse : `{location_id, period, granularity, data: [{timestamp, count, entries, exits}]}`
+
+### `GET /path`
+Plus court chemin entre deux bâtiments (Dijkstra).  
+Paramètres : `?from=1&to=7&avoid_congestion=true`  
+Réponse : `{path, total_distance, estimated_time, waypoints: [{lat, lng}]}`
+
+### `POST /predict`
+Prédiction de congestion future via Random Forest.  
+Body : `{location_id, datetime, event_type?}`  
+Réponse : `{location_id, predicted_level, confidence, predicted_occupancy_rate, model_version}`
+
+### `GET /feedbacks`
+Feedbacks étudiants avec filtres et pagination.  
+Paramètres : `?location_id=1&sentiment=negative&limit=20&offset=0`  
+Réponse : `{total, limit, offset, items: [{id, content, rating, sentiment, …}]}`
+
+### `GET /dashboard/stats`
+Agrégats pour le tableau de bord.  
+Paramètre : `?period=week` (`day` / `week` / `month`)  
+Réponse : `{top_locations, peak_hours, avg_congestion_by_day, feedback_summary, total_flux}`
 
 ---
 
-## 🛠️ Installation et Configuration
+## Lancement
 
 ### Prérequis
-*   Python 3.11+
-*   PostgreSQL
-*   Redis
 
-### Installation
-1.  **Cloner le dépôt** :
-    ```bash
-    git clone https://github.com/votre-repo/campusflow-lite-backend.git
-    cd campusflow-lite-backend
-    ```
-2.  **Installer les dépendances** :
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Configurer les variables d'environnement** (`.env`) :
-    ```env
-    DATABASE_URL=postgresql://user:password@localhost/campusflow
-    REDIS_URL=redis://localhost:6379/0
-    ```
-4.  **Lancer l'application** :
-    ```bash
-    uvicorn app.main:app --reload
-    ```
+- Docker & Docker Compose installés
+- Ports `8000`, `5432`, `6379` libres
 
----
+### Démarrage
 
-## 📡 Documentation de l'API (Endpoints)
+```bash
+# 1. Configurer les variables d'environnement
+cp .env.example .env
 
-L'API est documentée automatiquement via Swagger à l'adresse `/docs`. Voici les endpoints principaux :
+# 2. Construire et lancer les conteneurs
+docker-compose up --build
+```
 
-### Gestion du Campus
-*   `GET /locations` : Liste des bâtiments avec coordonnées GPS et métadonnées.
-*   `GET /path` : Calcul de l'itinéraire optimal entre deux points (NetworkX).
+L'API est accessible sur **http://localhost:8000**.
 
-### Flux & Congestion
-*   `GET /congestion` : Niveau de congestion actuel (données cachées dans Redis).
-*   `GET /flux/live` : Flux de personnes en temps réel.
-*   `GET /flux/history/{id}` : Historique des flux pour un bâtiment spécifique.
+### Peupler la base de données
 
-### Intelligence Artificielle
-*   `POST /predict` : Prédiction de l'affluence future basée sur le modèle Random Forest.
-*   `GET /dashboard/stats` : Statistiques agrégées pour le tableau de bord.
+```bash
+docker exec -it campusflow-backend-backend-1 bash
+python -c "
+from app.database.session import SessionLocal
+from app.utils.seed import seed_database
+db = SessionLocal()
+seed_database(db)
+db.close()
+"
+```
 
-### Feedbacks
-*   `GET /feedbacks` : Liste des retours étudiants.
-*   `POST /feedbacks` : Soumission d'un nouveau feedback avec analyse de sentiment.
+### Vérification
+
+```bash
+curl http://localhost:8000/
+```
+
+### Arrêt
+
+```bash
+docker-compose down
+```
 
 ---
 
-## 📊 Modèles de Données
+## Tests
 
-Le schéma PostgreSQL comprend quatre tables principales :
-1.  **`locations`** : Identifiants, noms, coordonnées GPS, types de bâtiments.
-2.  **`flux`** : Enregistrements temporels du nombre de personnes par lieu.
-3.  **`schedules`** : Emplois du temps et événements planifiés.
-4.  **`feedbacks`** : Commentaires et notes laissés par les utilisateurs.
+Les tests utilisent une base **SQLite en mémoire** et **fakeredis** — aucun service Docker requis.
 
----
+```bash
+# Installer les dépendances de développement
+pip install -r requirements-dev.txt
 
-## 🔒 Sécurité et Bonnes Pratiques
+# Lancer tous les tests
+pytest tests/ -v
 
-*   **Validation stricte** : Utilisation systématique de Pydantic pour éviter les injections et erreurs de type.
-*   **Gestion des erreurs** : Centralisation des exceptions via des gestionnaires globaux dans `utils/errors.py`.
-*   **Performance** : Mise en cache Redis avec TTL pour soulager la base de données sur les endpoints critiques.
-*   **Abstraction** : Utilisation du pattern *Service* pour isoler la logique métier des routes HTTP.
+# Lancer un test spécifique
+pytest tests/test_path.py -v
 
----
+# Ou via Docker
+docker-compose run --rm backend pytest tests/
+```
 
-## 📅 Plan d'Implémentation (Hackathon 24h)
-
-Le projet a été structuré pour une livraison rapide :
-*   **H0 - H4** : Setup DB, modèles ORM et initialisation FastAPI.
-*   **H4 - H12** : Développement des services de base (locations, flux) et intégration Redis.
-*   **H12 - H18** : Logique complexe (Pathfinding NetworkX & Inférence ML).
-*   **H18 - H24** : Tests, documentation Swagger et déploiement.
+**Couverture des tests :**
+- Validité des réponses HTTP (200, 404, 422…)
+- Comportement des services (Dijkstra, cache Redis, agrégations SQL)
+- Cas limites (bâtiment introuvable, chemin identique, paramètres invalides)
 
 ---
 
-> **CampusFlow Lite** — Hackathon 2025.
+## Bonnes pratiques
+
+- **Validation stricte** — corps de requête validés par Pydantic, erreurs `422` avec détails
+- **Gestion centralisée des erreurs** — format JSON uniforme via `http_exception_handler`
+- **Cache Redis** — données de congestion mises en cache 60 secondes
+- **Architecture en couches** — `routers → services → modèles`
+- **Configuration par variables d'environnement** — aucune donnée sensible en dur
+- **Docker Compose production-ready** — healthchecks et politiques de redémarrage
+
+---
+
+## Évolutions possibles
+
+- **Graphe NetworkX** — remplacer les distances euclidiennes par des arêtes réelles
+- **Authentification** — ajouter JWT (`/auth/login`, `/auth/register`)
+- **WebSockets** — polling temps réel plus efficace que les requêtes GET périodiques
+- **ML avancé** — remplacer Random Forest par XGBoost ou un réseau LSTM
+- **Monitoring** — intégrer Prometheus + Grafana (latence, taux d'erreur)
+
+---
+
+## Dépannage
+
+| Problème | Solution |
+|---|---|
+| `ModuleNotFoundError` au démarrage | Vérifier que `PYTHONPATH=/app` est défini dans le Dockerfile |
+| Redis refuse la connexion | Vérifier que le service `redis` est healthy : `docker-compose ps` |
+| Les endpoints retournent `[]` | Base vide — exécuter le script `seed.py` |
+| `/predict` renvoie `503` | `congestion_rf.pkl` introuvable — lancer `train_model.py` |
+| Tests en échec avec `ImportError` | Installer les dépendances ou utiliser `docker-compose run` |
+
+---
+
+Bon hackathon ! 🚀
