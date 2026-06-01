@@ -1,138 +1,138 @@
-[
-    {
-        "id": 1,
-        "nom": "Amphi",
-        "latitude": 3.8450,
-        "longitude": 11.5020,
-        "capacite": 120,
-        "type": "Amphitheatre"
-    },
-    {
-        "id": 2,
-        "nom": "Bibliotheque",
-        "latitude": 3.8445,
-        "longitude": 11.5015,
-        "capacite": 20,
-        "type": "Bibliotheque"
-    },
-    {
-        "id": 3,
-        "nom": "C16",
-        "latitude": 3.8460,
-        "longitude": 11.5030,
-        "capacite": 60,
-        "type": "Salle de cours"
-    },
-    {
-        "id": 4,
-        "nom": "C17",
-        "latitude": 3.8462,
-        "longitude": 11.5032,
-        "capacite": 60,
-        "type": "Salle de cours"
-    },
-    {
-        "id": 5,
-        "nom": "L24",
-        "latitude": 3.8465,
-        "longitude": 11.5035,
-        "capacite": 60,
-        "type": "Laboratoire"
-    },
-    {
-        "id": 6,
-        "nom": "L27",
-        "latitude": 3.8467,
-        "longitude": 11.5037,
-        "capacite": 60,
-        "type": "Laboratoire"
-    },
-    {
-        "id": 7,
-        "nom": "C5",
-        "latitude": 3.8470,
-        "longitude": 11.5040,
-        "capacite": 15,
-        "type": "Petite salle de TP"
-    },
-    {
-        "id": 8,
-        "nom": "C6",
-        "latitude": 3.8472,
-        "longitude": 11.5042,
-        "capacite": 15,
-        "type": "Petite salle de TP"
-    },
-    {
-        "id": 9,
-        "nom": "C13",
-        "latitude": 3.8475,
-        "longitude": 11.5045,
-        "capacite": 15,
-        "type": "Petite salle de TP"
-    },
-    {
-        "id": 10,
-        "nom": "L26",
-        "latitude": 3.8477,
-        "longitude": 11.5047,
-        "capacite": 15,
-        "type": "Petit laboratoire"
-    },
-    {
-        "id": 11,
-        "nom": "L28",
-        "latitude": 3.8479,
-        "longitude": 11.5049,
-        "capacite": 15,
-        "type": "Petit laboratoire"
-    },
-    {
-        "id": 12,
-        "nom": "L29",
-        "latitude": 3.8480,
-        "longitude": 11.5050,
-        "capacite": 30,
-        "type": "Salle de TP"
-    },
-    {
-        "id": 13,
-        "nom": "L22",
-        "latitude": 3.8482,
-        "longitude": 11.5052,
-        "capacite": 30,
-        "type": "Salle de TP"
-    },
-    {
-        "id": 14,
-        "nom": "L23",
-        "latitude": 3.8484,
-        "longitude": 11.5054,
-        "capacite": 30,
-        "type": "Salle de TP"
-    },
-    {
-        "id": 15,
-        "nom": "C12",
-        "latitude": 3.8486,
-        "longitude": 11.5056,
-        "capacite": 30,
-        "type": "Salle de cours"
-    },
-    {
-        "id": 16,
-        "nom": "L20",
-        "latitude": 3.8488,
-        "longitude": 11.5058,
-        "capacite": 30,
-        "type": "Laboratoire"
-    },
-    {
-        "id": 17,
-        "nom": "L21",
-        "latitude": 3.8490,
-        "longitude": 11.5060,
-        "capacite": 30,
-        "type": "Laboratoire"
-    }
-]
+[
+    {
+        "id": 1,
+        "nom": "Amphi",
+        "latitude": 3.8450,
+        "longitude": 11.5020,
+        "capacite": 120,
+        "type": "Amphitheatre"
+    },
+    {
+        "id": 2,
+        "nom": "Bibliotheque",
+        "latitude": 3.8445,
+        "longitude": 11.5015,
+        "capacite": 20,
+        "type": "Bibliotheque"
+    },
+    {
+        "id": 3,
+        "nom": "C16",
+        "latitude": 3.8460,
+        "longitude": 11.5030,
+        "capacite": 60,
+        "type": "Salle de cours"
+    },
+    {
+        "id": 4,
+        "nom": "C17",
+        "latitude": 3.8462,
+        "longitude": 11.5032,
+        "capacite": 60,
+        "type": "Salle de cours"
+    },
+    {
+        "id": 5,
+        "nom": "L24",
+        "latitude": 3.8465,
+        "longitude": 11.5035,
+        "capacite": 60,
+        "type": "Laboratoire"
+    },
+    {
+        "id": 6,
+        "nom": "L27",
+        "latitude": 3.8467,
+        "longitude": 11.5037,
+        "capacite": 60,
+        "type": "Laboratoire"
+    },
+    {
+        "id": 7,
+        "nom": "C5",
+        "latitude": 3.8470,
+        "longitude": 11.5040,
+        "capacite": 15,
+        "type": "Petite salle de TP"
+    },
+    {
+        "id": 8,
+        "nom": "C6",
+        "latitude": 3.8472,
+        "longitude": 11.5042,
+        "capacite": 15,
+        "type": "Petite salle de TP"
+    },
+    {
+        "id": 9,
+        "nom": "C13",
+        "latitude": 3.8475,
+        "longitude": 11.5045,
+        "capacite": 15,
+        "type": "Petite salle de TP"
+    },
+    {
+        "id": 10,
+        "nom": "L26",
+        "latitude": 3.8477,
+        "longitude": 11.5047,
+        "capacite": 15,
+        "type": "Petit laboratoire"
+    },
+    {
+        "id": 11,
+        "nom": "L28",
+        "latitude": 3.8479,
+        "longitude": 11.5049,
+        "capacite": 15,
+        "type": "Petit laboratoire"
+    },
+    {
+        "id": 12,
+        "nom": "L29",
+        "latitude": 3.8480,
+        "longitude": 11.5050,
+        "capacite": 30,
+        "type": "Salle de TP"
+    },
+    {
+        "id": 13,
+        "nom": "L22",
+        "latitude": 3.8482,
+        "longitude": 11.5052,
+        "capacite": 30,
+        "type": "Salle de TP"
+    },
+    {
+        "id": 14,
+        "nom": "L23",
+        "latitude": 3.8484,
+        "longitude": 11.5054,
+        "capacite": 30,
+        "type": "Salle de TP"
+    },
+    {
+        "id": 15,
+        "nom": "C12",
+        "latitude": 3.8486,
+        "longitude": 11.5056,
+        "capacite": 30,
+        "type": "Salle de cours"
+    },
+    {
+        "id": 16,
+        "nom": "L20",
+        "latitude": 3.8488,
+        "longitude": 11.5058,
+        "capacite": 30,
+        "type": "Laboratoire"
+    },
+    {
+        "id": 17,
+        "nom": "L21",
+        "latitude": 3.8490,
+        "longitude": 11.5060,
+        "capacite": 30,
+        "type": "Laboratoire"
+    }
+]

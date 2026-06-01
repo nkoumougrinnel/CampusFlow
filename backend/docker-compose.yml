@@ -1,15 +1,47 @@
+version: '3.8'
+
 services:
-  api:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: campusflow
+      POSTGRES_PASSWORD: securepass
+      POSTGRES_DB: campusflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
     build: .
     ports:
       - "8000:8000"
-    
-  postgres:
-    image: postgres:17
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      POSTGRES_USER: campusflow
-      POSTGRES_PASSWORD: campusflow
-      POSTGRES_DB: campusflow
-    
-  redis:
-    image: redis:7
+      DATABASE_URL: postgresql://campusflow:securepass@db:5432/campusflow
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./app:/app/app
+      - ./models:/app/models
+
+volumes:
+  postgres_data:
