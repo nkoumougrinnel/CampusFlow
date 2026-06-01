@@ -17,20 +17,32 @@ CREATE TABLE IF NOT EXISTS locations (
 CREATE INDEX IF NOT EXISTS locations_geom_idx ON locations USING GIST (geom);
 
 -- Table des emplois du temps (schedules)
+-- Alignée sur raw/schedules.csv (groupe, type_activite, jour_semaine).
+-- En dev, si l'ancienne table existe encore : DROP TABLE IF EXISTS schedules CASCADE;
 CREATE TABLE IF NOT EXISTS schedules (
     id SERIAL PRIMARY KEY,
-    etudiant_id INTEGER NOT NULL,
+    groupe VARCHAR(20) NOT NULL,
+    type_activite VARCHAR(10) NOT NULL,
     salle_id INTEGER NOT NULL,
     heure_debut TIMESTAMP WITH TIME ZONE NOT NULL,
     heure_fin TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT fk_salle
-        FOREIGN KEY(salle_id)
-        REFERENCES locations(id)
+    jour_semaine SMALLINT NOT NULL,
+    CONSTRAINT fk_schedules_salle
+        FOREIGN KEY (salle_id)
+        REFERENCES locations (id),
+    CONSTRAINT chk_schedules_type_activite
+        CHECK (type_activite IN ('cours', 'tp')),
+    CONSTRAINT chk_schedules_jour_semaine
+        CHECK (jour_semaine >= 0 AND jour_semaine <= 5),
+    CONSTRAINT chk_schedules_heures
+        CHECK (heure_fin > heure_debut)
 );
 
--- Index sur etudiant_id et salle_id pour des recherches rapides
-CREATE INDEX IF NOT EXISTS schedules_etudiant_id_idx ON schedules (etudiant_id);
+CREATE INDEX IF NOT EXISTS schedules_groupe_idx ON schedules (groupe);
 CREATE INDEX IF NOT EXISTS schedules_salle_id_idx ON schedules (salle_id);
+CREATE INDEX IF NOT EXISTS schedules_jour_semaine_idx ON schedules (jour_semaine);
+CREATE INDEX IF NOT EXISTS schedules_type_activite_idx ON schedules (type_activite);
+CREATE INDEX IF NOT EXISTS schedules_heure_debut_idx ON schedules (heure_debut);
 
 -- Table des flux (flux)
 CREATE TABLE IF NOT EXISTS flux (
